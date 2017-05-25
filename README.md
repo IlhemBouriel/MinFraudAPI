@@ -22,7 +22,8 @@ Calling MinFraudApi as a POST Web Service<br />
 <br />
 <br />
 From the received data ,we can confirm if there is a fraud or not. </br>
-In our case _fraudLimit = 2.7; // it's a Set to your risk tolerance threshold
+//it's a Set to your risk tolerance threshold</br>
+_fraudLimit = 2.7; // 
 foreach(string s in respCodes)
 				{
 					if (-1 != s.IndexOf("score="))
