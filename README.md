@@ -5,7 +5,8 @@ ML algorithm used is Logistic Regression <br />
 ## Code Example
 Calling MinFraudApi as a POST Web Service<br />
   // Attempt to use secondary server<br />
-					req = (HttpWebRequest) WebRequest.Create(_minFraudAddress2);<br />
+  
+					req = (HttpWebRequest) WebRequest.Create(_minFraudAddress2);
 
 					// Set values for the request back
 					req.ContentLength = byteArray.Length;
@@ -23,7 +24,9 @@ Calling MinFraudApi as a POST Web Service<br />
 <br />
 From the received data ,we can confirm if there is a fraud or not. </br>
 //it's a Set to your risk tolerance threshold</br>
-_fraudLimit = 2.7; // 
+
+
+_fraudLimit = 2.7;
 foreach(string s in respCodes)
 				{
 					if (-1 != s.IndexOf("score="))
