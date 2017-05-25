@@ -1,0 +1,279 @@
+<!--                        IGNORE THIS SECTION                            --><html><head>
+		<title>The Code Project</title>
+		<STYLE> BODY, P, TD { font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 10pt }
+	H2,H3,H4,H5 { color: #ff9900; font-weight: bold; }
+	H2 { font-size: 13pt; }
+	H3 { font-size: 12pt; }
+	H4 { font-size: 10pt; color: black; }
+	PRE { BACKGROUND-COLOR: #FBEDBB; FONT-FAMILY: "Courier New", Courier, mono; WHITE-SPACE: pre; }
+	CODE { COLOR: #990000; FONT-FAMILY: "Courier New", Courier, mono; }
+	</STYLE>
+		<link href="http://www.codeproject.com/styles/global.css" type="text/css" rel="stylesheet"></head>
+	<body bgColor="#ffffff" color="#000000">
+		<!--------------------------------------------------------------------------->
+		<!-------------------------------     STEP 1      --------------------------->
+		<!--  Fill in the details (CodeProject will reformat this section for you) -->
+		<pre>
+Title:			minFraud Example       
+Author:			Shawn Pourchot
+Email:			codeproject-sp@screamingbee.com 
+Environment:	VC.NET 2003,Windows XP, Windows 2000 
+Keywords:		E-commerce, GEO IP,minFraud, MaxMind, Credit Card, C#,ASP.NET       
+Level:			Intermediate 
+Description:	Implementation of minFraud interface in C#
+Section			ASP.NET
+SubSection		C#
+</pre>
+		<!-------------------------------     STEP 2      --------------------------->
+		<!--  Include download and sample image information.                       -->
+		<ul class="download">
+			<li>
+				<A href="MinFraudAPI_src.zip">Download source -&nbsp;48 Kb</A>
+			</li>
+		</ul>
+		<p><IMG alt="Collection Example" src="MinFraudExample.png"></p>
+		<!-------------------------------     STEP 3      --------------------------->
+		<!--  Add the article text. Please use simple formatting (<h2>, <p> etc)   -->
+		<h2>Introduction</h2>
+		<p>Any business that accepts credit cards online will quickly learn that standard 
+			credit card checks are insufficient. An additional layer you can add is IP 
+			location and email validation.
+		</p>
+		<p>In this article I will set out to explain how to implement the minFraud service 
+			from MaxMind using ASP.NET and C#.
+		</p>
+		<h2>Using the code</h2>
+		<p>The minFraud interface implementation shown here has 2 parts:</p>
+		<OL>
+			<LI>
+			Collection of credit card information.
+			<LI>
+				The class that contacts minFraud for a fraud score.</LI>
+		</OL>
+		<h3>Collect User Information</h3>
+		<p>The first part is just a web page, <code>WebForm1.aspx</code>. It collects the 
+			credit card information and calls the minFraud class to get the fraud score and 
+			results. You should use the country code (e.g. US, CA etc.) for the country and 
+			the zipcode can be a postal code. The format for phone numbers is very tolerant 
+			and need not conform to any particular style. CC Bin is the first 6 digits of a 
+			credit card. For security reasons do not send the full credit card number to 
+			minFraud.
+		</p>
+		<P>Clicking “check” will send the results to minFraud for scoring.
+		</P>
+		<pre>
+		private void btnCheck_Click(object sender, System.EventArgs e)
+		{
+			CCInfo ccInfo = new CCInfo();
+			ccInfo.IP = txtIP.Text;
+			ccInfo.City = txtCity.Text;
+			ccInfo.State = txtState.Text;
+			ccInfo.ZipCode = txtZip.Text;
+			ccInfo.Country = txtCountry.Text;
+			ccInfo.EMail = txtEmail.Text;
+			ccInfo.Phone = txtPhone.Text;
+			ccInfo.Bin = txtBin.Text;
+
+			double fraudScore;
+			string info;
+			if (MinFraud.IsSafe(ccInfo,out fraudScore,out info))
+			{
+				lblSafe.ForeColor = Color.Green;
+				lblSafe.Text = "Yes";
+			}
+			else
+			{
+				lblSafe.ForeColor = Color.Red;
+				lblSafe.Text = "No";
+			}
+
+			lblScore.Text = fraudScore.ToString();
+			lblResults.Text = info;
+		}
+		</pre>
+		<h3>Score User Information</h3>
+		<p>The second part is a class to post the user information to the minFraud website. 
+			All the information on contacting and parsing results is contained in the class <code>
+				MinFraud</code>. Be sure to change <code>_minFraudKey</code> to your own 
+			key. I chose to use the SSL link to minFraud servers in this example. They also 
+			provide a non SSL link. Because minFraud uses a scoring system you can easily 
+			adjust your risk by adjusting <code>_fraudLimit</code> to a level you are 
+			comfortable with. It is recommended that in a production system you move this 
+			variable to your <code>web.config</code> until you find the correct level.</p>
+		<pre>		
+		public static bool IsSafe(CCInfo ccInfo, out double fraudScore,out string info)
+		{
+			bool safe = false;
+			fraudScore = 10.0;
+			info = string.Empty;
+
+			HttpWebResponse webResponse = null;
+
+			try
+			{				
+				// Write the request to gateway (required data)
+				string reqString = "i=" + ccInfo.IP;
+				reqString += "&amp;city=" + HttpUtility.UrlEncode(ccInfo.City);
+				reqString += "&amp;region=" + HttpUtility.UrlEncode(ccInfo.State);
+				reqString += "&amp;postal=" + HttpUtility.UrlEncode(ccInfo.ZipCode);
+				reqString += "&amp;country=" + HttpUtility.UrlEncode(ccInfo.Country);
+				reqString += "&amp;license_key=" + _minFraudKey;
+
+				// optional data
+				if (ccInfo.Phone.Length &gt; 0)
+				{
+					reqString += "&amp;custPhone=" + ccInfo.Phone;
+				}
+				if (ccInfo.Bin.Length &gt; 0)
+				{
+					reqString += "&amp;bin=" + ccInfo.Bin;
+				}
+
+				// Calc MD5 on email
+				if (ccInfo.EMail.Length &gt; 0)
+				{
+					string emailDomain = ccInfo.EMail.Substring(ccInfo.EMail.IndexOf("@")+1);
+					reqString += "&amp;domain=" + emailDomain;
+					reqString += "&amp;emailMD5=" + EmailHash(ccInfo.EMail);
+				}
+
+				// Find content length
+				UTF8Encoding encoding = new UTF8Encoding();
+				Byte[] byteArray = encoding.GetBytes(reqString);
+
+				// Create the request back
+				HttpWebRequest req = (HttpWebRequest) WebRequest.Create(_minFraudAddress);
+
+				try
+				{
+					// Set values for the request back
+					req.ContentLength = byteArray.Length;
+					req.Method = "POST";
+					req.ContentType = "application/x-www-form-urlencoded";
+					req.Timeout = 5000;
+
+					using (Stream requestStream = req.GetRequestStream()) 
+					{
+						requestStream.Write(byteArray,0,byteArray.Length);
+						requestStream.Close();
+					}					
+
+					// Do the request to Gateway and get the response
+					webResponse = (HttpWebResponse)req.GetResponse();
+				}
+				catch
+				{
+					if (null != webResponse)
+					{
+						webResponse.Close();
+					}
+
+					// Attempt to use secondary server
+					req = (HttpWebRequest) WebRequest.Create(_minFraudAddress2);
+
+					// Set values for the request back
+					req.ContentLength = byteArray.Length;
+					req.Method = "POST";
+					req.ContentType = "application/x-www-form-urlencoded";
+					req.Timeout = 5000;
+
+					using (Stream requestStream = req.GetRequestStream()) 
+					{
+						requestStream.Write(byteArray,0,byteArray.Length);
+						requestStream.Close();
+					}			
+					webResponse = (HttpWebResponse)req.GetResponse();		
+				}
+
+				Stream strm = webResponse.GetResponseStream();
+				StreamReader stIn = new StreamReader(strm);
+				info = stIn.ReadToEnd();
+				stIn.Close();					
+
+				// Check response for errors and such
+				char[] splitChars = {';'};
+				string[] respCodes = info.Split(splitChars);
+
+				foreach(string s in respCodes)
+				{
+					if (-1 != s.IndexOf("score="))
+					{
+						fraudScore = double.Parse(HttpUtility.UrlDecode(s.Substring(s.IndexOf("=")+1)));
+
+						safe = (fraudScore &lt; _fraudLimit);
+						break; // nothing else to do for now
+					}
+				}
+			}
+			catch 
+			{
+				// Log exception
+			}
+			finally
+			{
+				if (null != webResponse)
+				{
+					webResponse.Close();
+				}
+			}
+
+			return safe;
+		}
+		
+			</pre>
+		<p>An interesting feature of minFraud is that it contains a live database of 
+			suspected fraudulent email addresses. You can check your customers email 
+			address against this database by doing an MD5 hash on the email address and 
+			passing it to minFraud.</p>
+		<pre>
+		private static string EmailHash(string email)
+		{
+			// Must be lower case before hashing
+			email = email.ToLower();
+
+			Encoder enc = System.Text.Encoding.UTF8.GetEncoder();
+
+			// Create a buffer large enough to hold the string
+			byte[] byteText = new byte[email.Length];
+			enc.GetBytes(email.ToCharArray(), 0, email.Length, byteText, 0, true);
+
+			// Now that we have a byte array we can ask the CSP to hash it
+			MD5 md5 = new MD5CryptoServiceProvider();
+			byte[] result = md5.ComputeHash(byteText);
+
+			// Build the final string by converting each byte
+			// into hex and appending it to a StringBuilder
+			StringBuilder downloadHash = new StringBuilder();
+			foreach(byte b in result)
+			{
+				downloadHash.Append(Convert.ToString(b,16).PadLeft(2,'0'));
+			}
+
+			return downloadHash.ToString();
+		}				
+			</pre>
+		<h2>More Information</h2>
+		<p>To setup a free trial account for minFraud visit <a href="http://www.maxmind.com/app/ccv_overview">
+				www.maxmind.com</a></p>
+		<h2>Disclaimer</h2>
+		<p><EM>This documentation and the accompanying files are provided "as is" with no 
+				expressed or implied warranty. No responsibilities for possible damages, or 
+				side effects in its functionality. The user must assume the entire risk of 
+				using this code. The author and Screaming Bee LLC accepts no liability if it 
+				causes any damage to your computer, website, software, reputation or your love 
+				life. Use at your own risk.</EM></p>
+		<h2>About Shawn Pourchot</h2>
+		<p>Shawn is President and co-founder of Screaming Bee LLC.</p>
+		<p>He has been developing software for more years then he cares to remember. One of 
+			his ealiest projects, AutoGreet, written in 6502 assembly&nbsp;won him the 
+			affection and hatred of a multiline BBS&nbsp;community (remember those?). 
+			&nbsp;Currently his projects involve ASP.NET/C# and driver development at 
+			Screaming Bee.</p>
+		<p>Screaming Bee is a leader in voice changing software and solutions for online 
+			games and messenger applications.<br>
+			<br>
+			For more information please visit: <A href="http://www.screamingbee.com">http://www.screamingbee.com</A></p>
+		<P>Click <A href="http://www.codeproject.com/script/profile/whos_who.asp?id=1558139">here</A>
+			to view Shawn Pourchot's online profile.</P>
+	</body>
+</html>

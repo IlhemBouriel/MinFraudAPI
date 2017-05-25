@@ -1,0 +1,9 @@
+C:\Users\Ilhem Bouriel\Desktop\securinets\MinFraudAPI\bin\MinFraudAPI.dll.config
+C:\Users\Ilhem Bouriel\Desktop\securinets\MinFraudAPI\bin\MinFraudAPI.dll
+C:\Users\Ilhem Bouriel\Desktop\securinets\MinFraudAPI\bin\MinFraudAPI.pdb
+C:\Users\Ilhem Bouriel\Desktop\securinets\MinFraudAPI\obj\Debug\MinFraudAPI.csprojResolveAssemblyReference.cache
+C:\Users\Ilhem Bouriel\Desktop\securinets\MinFraudAPI\obj\Debug\MinFraudAPI.Global.resources
+C:\Users\Ilhem Bouriel\Desktop\securinets\MinFraudAPI\obj\Debug\MinFraudAPI.WebForm1.resources
+C:\Users\Ilhem Bouriel\Desktop\securinets\MinFraudAPI\obj\Debug\MinFraudAPI.csproj.GenerateResource.Cache
+C:\Users\Ilhem Bouriel\Desktop\securinets\MinFraudAPI\obj\Debug\MinFraudAPI.dll
+C:\Users\Ilhem Bouriel\Desktop\securinets\MinFraudAPI\obj\Debug\MinFraudAPI.pdb
