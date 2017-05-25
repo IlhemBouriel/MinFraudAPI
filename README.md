@@ -23,18 +23,16 @@ Calling MinFraudApi as a POST Web Service<br />
 <br />
 <br />
 From the received data ,we can confirm if there is a fraud or not. </br>
-//it's a Set to your risk tolerance threshold</br>
+//it's a Set to your risk tolerance threshold double _fraudLimit = 2.7 </br>
 
-
-_fraudLimit = 2.7;
-foreach(string s in respCodes)
+				 
+				foreach(string s in respCodes)
 				{
 					if (-1 != s.IndexOf("score="))
 					{
-						fraudScore = double.Parse(HttpUtility.UrlDecode(s.Substring(s.IndexOf("=")+1)));<br />
-
+						fraudScore = double.Parse(HttpUtility.UrlDecode(s.Substring(s.IndexOf("=")+1)));
 						safe = (fraudScore < _fraudLimit);
-						break; // nothing else to do for now
+						break;
 					}
 				}
 ## Installation
